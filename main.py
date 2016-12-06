@@ -20,7 +20,7 @@ while True:
     #does a binary threshold of the grayscale (not being used now)
     _, thres            = cv2.threshold(gray,127,255,cv2.THRESH_BINARY)
     #finds the contours of the grayscale
-    contours, hierarchy = cv2.findContours(gray,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, _ = cv2.findContours(gray,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     #draws the contours to the screen
     cv2.drawContours(res,contours,-1,(0,255,0),3)
     #displays the video
