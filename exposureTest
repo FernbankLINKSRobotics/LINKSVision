@@ -1,0 +1,12 @@
+import cv2
+import numpy as np
+
+cap = cv2.VideoCapture(2)
+cap.set(cv2.CAP_PROP_EXPOSURE, -1.0)
+
+print("Starting Exposure %s" %(cap.get(cv2.CAP_PROP_EXPOSURE )))
+
+while True:
+    running, frame = cap.read()
+    cv2.imshow("Image", frame)
+    if cv2.waitKey(5) & 0xFF == 27: break
