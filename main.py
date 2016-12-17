@@ -1,24 +1,32 @@
 import cv2
 import numpy as np
-from networktables import NetworkTable
 
 
-debug = False
+
 largestArea = 0
+cx, cy = 0, 0
+
+
+#DEBUG Variables
+debug = True #Do we want to see an image output?
+networkTables = True #Are we testing out the Network Tables?
+
+
+filterArea = 1000
 
 #Set up NetworkTables
-NetworkTable.setIPAddress("10.44.68.2")
-NetworkTable.setClientMode()
-NetworkTable.initialize()
-table = NetworkTable.getTable("LINKSVision")
 
-#This is the actual video stream
-cap = cv2.VideoCapture(0)
+
+
+
+cap = cv2.VideoCapture(1)
+cap.set(cv2.CAP_PROP_EXPOSURE, 1)
+
 while True:
     #reads in the video and breaks it into frames
     running, frame            = cap.read()
 
-    if(running):
+    if running:
         #First, we need to blur the image so contours are nicer
         frame = cv2.GaussianBlur(frame, (5,5), 0)
         
@@ -26,8 +34,8 @@ while True:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         #The Ranges of Green Color
-        lower_green = np.array([60,175,140])
-        upper_green = np.array([180,255,255])
+        lower_green = np.array([80,100,100])
+        upper_green = np.array([100,255,255])
 
         #Now, we need to find out what is in that range
         #OpenCV will return a binary image where white = 1
@@ -35,7 +43,7 @@ while True:
         mask = cv2.inRange(hsv, lower_green, upper_green)
 
         #The Kernel is just an array that is scanned over the
-        #image. It is full of ones.
+        #image. It is full of ones so it doesn't change anything.
         kernel = np.ones((5,5), np.uint8)
 
         #Now, we need to remove more noise! This can be done
@@ -55,21 +63,54 @@ while True:
 
         #Needed otherwise the program will crash
         if len(contours) >= 1:
+            largestArea = 0
             for cnt in contours:
-                area = cv2.countourArea(cnt)
-                if area > largestArea:
+                area = cv2.contourArea(cnt)
+                if area >= largestArea * .8 and area >= filterArea:
                     largestArea = area
                     M = cv2.moments(cnt)
                     #Also needed unless you like errors
                     if M["m00"] != 0:
                         cx = int(M['m10']/M['m00'])
                         cy = int(M['m01']/M['m00'])
-            #So, now that we have our working contour,
-            #All we need to do is send the data to the robot
-            table.putNumber("Center X", cx)
-            table.putNumber("Center Y", cy)
-            table.putNumber("Area ", largestArea)
-            
+                        print("Center X: %s" %(cx))
+                        print("Center Y: %s" %(cy))
+                    else:
+                        cx, cy = 0, 0                      
 
+                    if debug:
+                        #For visualization, it would be nice to see what the robot
+                        #considers the largest rectangle to be. Time to introduce
+                        #hulls & boxes!
+            
+                        #First, we tell the robot to look for the convex points around
+                        #the contour.
+                        hull = cv2.convexHull(cnt)
+                        #With these points, we now are looking for the smallest
+                        #rectangle around said points
+                        rect = cv2.minAreaRect(hull)
+                        #Unfortantly, minAreaRect() only gets the center (x,y),
+                        #(width, height), angle of rotation. To get
+                        #around this, we use the boxpoints function to get the
+                        #corners of the rectangle.
+                        box = cv2.boxPoints(rect)
+                        #With the corners, now we 
+                        box = np.int0(box)
+
+                        #The Circle will be used as a reference of what
+                        #the contour's center is
+                        cv2.circle(res,(cx, cy), 8, (0,0,255), -1)
+                        
+                        
+                    
         if debug:
-            cv2.imshow("Image", res)
+            cv2.drawContours(res, contours, -1, (0, 255, 0), 3)
+            cv2.circle(res,(cx, cy), 8, (0,0,255), -1)
+            cv2.imshow("Initial", frame)
+            cv2.imshow("Final", res)
+            
+    else:
+        print("ERROR")
+
+    if cv2.waitKey(5) == ord("q"): break
+cv2.destroyAllWindows()
