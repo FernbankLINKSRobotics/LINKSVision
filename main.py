@@ -1,8 +1,5 @@
 import cv2
 import numpy as np
-from networktables import NetworkTable
-
-
 
 largestArea = 0
 cx, cy = 0, 0
@@ -37,7 +34,7 @@ if videoStream:
     cap.set(cv2.CAP_PROP_EXPOSURE, -1.0)
 else:
     frame = cv2.imread("7.jpg")
-    #frame = cv2.GaussianBlur(frame, (5,5), 0)
+    frame = cv2.GaussianBlur(frame, (5,5), 0)
 
 while True:
     #reads in the video and breaks it into frames
@@ -124,14 +121,14 @@ while True:
 
                         #The Circle will be used as a reference of what
                         #the contour's center is
-                        cv2.circle(res,(cx, cy), 8, (0,0,255), 0)
+                        circle = cv2.circle(res, (cx, cy), 8, (0,0,255), 0)
                         
                         
                     
         if debug:
             #cv2.drawContours(res, contours, -1, (0, 255, 0), 3)
             
-            cv2.drawContours(res, hull, -1, (0, 255, 255), 3)
+            cv2.drawContours(res, [hull], -1, (0, 255, 255), 3)
             cv2.imshow("Initial", frame)
             cv2.imshow("Final", res)
             
