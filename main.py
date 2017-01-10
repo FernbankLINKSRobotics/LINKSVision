@@ -56,45 +56,32 @@ while True:
 
         #Needed otherwise the program will crash
         if len(contours) >= 2:
+            #Refrence Areas for Filter Loops
             largestArea = 0
             secondLargestArea = 0
 
-            #So, this is an array of all of the contour
-            #areas, and they are added to this array
-            #from the main contour array. This is done
-            #so we can find the largest and second largest
-            #contours as those will be the tape
-            areas = []
+            #Biggest Contour Filter
             for cnt in contours:
-                areas.append(cv2.contourArea(cnt))
-
-            for area in areas:
-                if area > largestArea:
-                    #Now, we find the largest area
-                    largestArea = area
-
-            #and get the index of it from the array
-            indexOfLargest = areas.index(area)
-            cnt1 = contours[indexOfLargest]
+                #More Filters to be added later
+                if cv2.contourArea(cnt) > largestArea:
+                    largestArea = cv2.contourArea(cnt)
+                    largestContour = cnt
             
-            for area in areas:
-                #So, finding the second largest is a little
-                #tricky. What I think we should do is iterate
-                #through the array again, but if we are at the
-                #largest area, we skip over it.
-                if area == areas[indexOfLargest]:
+            for cnt in contours:
+                #Skip over the largest contour so that isn't considered
+                if cnt == largestContour:
                     continue
                 #and keep going until we find the second largest
-                if area > secondLargestArea:
-                    secondLargestArea = area
-            
-            indexOfSecondLargest = areas.index(area)
-            cnt2 = contours[indexOfSecondLargest]
+                if cv2.contourArea(cnt) > secondLargestArea:
+                    secondLargestArea = cv2.contourArea(cnt)
+                    secondLargestContour = cnt
 
             #Get the Moments of each contour
-            M1 = cv2.moments(cnt1)
-            M2 = cv2.moments(cnt2)
+            M1 = cv2.moments(largestContour)
+            M2 = cv2.moments(secondLargestContour)
 
+            
+            #Needed to avoid a crash
             if M1["m00"] != 0 and M2["m00"] != 0:
                 #Average Center X
                 cx1 = int(M1['m10']/M1['m00'])
