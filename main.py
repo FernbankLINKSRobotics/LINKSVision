@@ -86,12 +86,12 @@ while True:
                 #Average Center X
                 cx1 = int(M1['m10']/M1['m00'])
                 cx2 = int(M2['m10']/M2['m00'])
-                cx = (cx1 + cx2) / 2.0
+                cx = (cx1 + cx2) / 2
 
                 #Average Center Y
                 cy1 = int(M1['m01']/M1['m00'])
                 cy2 = int(M2['m01']/M2['m00'])
-                cy = (cy1 + cy2) / 2.0
+                cy = (cy1 + cy2) / 2
                 
         if debug:
             cv2.drawContours(res, contours, -1, (0, 255, 0), 3)
