@@ -9,16 +9,19 @@ debug = True #Do we want to see an image output?
 
 filterArea = 1000
 
+countDown = 0
+photoCount = 0
+outputPhotos = True
+
 firstContour = None
 secondContour = None
 
-cap = cv2.VideoCapture(1)
-cap.set(cv2.CAP_PROP_EXPOSURE, 1)
+cap = cv2.VideoCapture(0)
 
 while True:
     #Breaks the Camera Stream into Frames
     running, frame            = cap.read()
-
+    
     if running:
         #First, we need to blur the image so contours are nicer
         frame = cv2.GaussianBlur(frame, (5,5), 0)
@@ -27,8 +30,8 @@ while True:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         #The Ranges of Green Color
-        lower_green = np.array([80,100,100])
-        upper_green = np.array([100,255,255])
+        lower_green = np.array([20,50,50])
+        upper_green = np.array([80,255,255])
 
         #Now, we need to find out what is in that range
         #OpenCV will return a binary image where white = 1
@@ -43,8 +46,8 @@ while True:
         #with erosion. When we erode, the program looks to see
         #if a zero is in the neighborhood of its scan. If it is,
         #the range of that kernel is 0.
-        mask = cv2.erode(mask, kernel, iterations = 1)
-        mask = cv2.dilate(mask, kernel, iterations = 1)
+        #mask = cv2.erode(mask, kernel, iterations = 1)
+        #mask = cv2.dilate(mask, kernel, iterations = 1)
 
         if debug:
             #This produces an image that is a combination
@@ -65,30 +68,18 @@ while True:
             #so we can find the largest and second largest
             #contours as those will be the tape
             areas = []
+            areasDup = []
             for cnt in contours:
                 areas.append(cv2.contourArea(cnt))
+                areasDup.append(cv2.contourArea(cnt))
 
-            for area in areas:
-                if area > largestArea:
-                    #Now, we find the largest area
-                    largestArea = area
-
+            areasDup.sort(reverse=True)
+            print(areasDup)
             #and get the index of it from the array
-            indexOfLargest = areas.index(area)
+            indexOfLargest = areas.index(areasDup[0])
             cnt1 = contours[indexOfLargest]
             
-            for area in areas:
-                #So, finding the second largest is a little
-                #tricky. What I think we should do is iterate
-                #through the array again, but if we are at the
-                #largest area, we skip over it.
-                if area == areas[indexOfLargest]:
-                    continue
-                #and keep going until we find the second largest
-                if area > secondLargestArea:
-                    secondLargestArea = area
-            
-            indexOfSecondLargest = areas.index(area)
+            indexOfSecondLargest = areas.index(areasDup[1])
             cnt2 = contours[indexOfSecondLargest]
 
             #Get the Moments of each contour
@@ -99,12 +90,12 @@ while True:
                 #Average Center X
                 cx1 = int(M1['m10']/M1['m00'])
                 cx2 = int(M2['m10']/M2['m00'])
-                cx = (cx1 + cx2) / 2.0
+                cx = (cx1 + cx2) / 2
 
                 #Average Center Y
                 cy1 = int(M1['m01']/M1['m00'])
                 cy2 = int(M2['m01']/M2['m00'])
-                cy = (cy1 + cy2) / 2.0
+                cy = (cy1 + cy2) / 2
                 
         if debug:
             cv2.drawContours(res, contours, -1, (0, 255, 0), 3)
@@ -112,8 +103,15 @@ while True:
             cv2.imshow("Initial", frame)
             cv2.imshow("Final", res)
             
-    else:
-        print("ERROR")
+    else: print("ERROR")
+
+    if outputPhotos == False: continue
+
+    countDown += 1
+    if countDown >= 30:
+        countDown = 0 
+        cv2.imwrite("photos/photo_%i.jpg" % photoCount, res)
+        photoCount += 1
 
     if cv2.waitKey(5) == ord("q"): break
 cv2.destroyAllWindows()
