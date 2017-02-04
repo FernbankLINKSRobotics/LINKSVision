@@ -67,20 +67,11 @@ while True:
             #from the main contour array. This is done
             #so we can find the largest and second largest
             #contours as those will be the tape
-            areas = []
-            areasDup = []
-            for cnt in contours:
-                areas.append(cv2.contourArea(cnt))
-                areasDup.append(cv2.contourArea(cnt))
 
-            areasDup.sort(reverse=True)
-            print(areasDup)
-            #and get the index of it from the array
-            indexOfLargest = areas.index(areasDup[0])
-            cnt1 = contours[indexOfLargest]
+            areas = sorted(enumerate(map(lambda x: vc2.contoursArea(x),countours)), key=lambda x: x[1], reverse=True)
             
-            indexOfSecondLargest = areas.index(areasDup[1])
-            cnt2 = contours[indexOfSecondLargest]
+            cnt1 = contours[areas[0][0]]
+            cnt2 = contours[areas[1][0]]
 
             #Get the Moments of each contour
             M1 = cv2.moments(cnt1)
