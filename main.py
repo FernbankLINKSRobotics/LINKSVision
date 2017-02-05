@@ -70,11 +70,10 @@ while True:
 
             #First off enumerate is a function that takes in an array and outputs an array of tuples with the first 
             #value being the index of the array and the second being the value from the array.
-
             #enumerate(map(lambda x: vc2.contoursArea(x),countours)) is a list of tuples where the value is equal to
             #the area of the contours area given earlier.
             #The rest of the line sortes that array in descending order from the value of the tuple
-            areas = sorted(enumerate(map(lambda x: vc2.contoursArea(x),countours)), key=lambda x: x[1], reverse=True)
+            areas = sorted(enumerate(map(lambda x: cv2.contoursArea(x), countours)), key=lambda x: x[1], reverse=True)
             
             #These find the indexes of the largest and second larges values of the contours and stores them.
             cnt1 = contours[areas[0][0]]
