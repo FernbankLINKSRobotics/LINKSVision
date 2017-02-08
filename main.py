@@ -1,4 +1,5 @@
 import cv2
+import subprocess
 import numpy as np
 
 largestArea = 0
@@ -110,5 +111,9 @@ while True:
         cv2.imwrite("photos/photo_%i.jpg" % photoCount, res)
         photoCount += 1
 
-    if cv2.waitKey(5) == ord("q"): break
+    ch = cv2.waitKey()
+    if ch == 27:break
+
+cap.release()
+subprocess.run(["showdown","now"], shell=True)
 cv2.destroyAllWindows()
