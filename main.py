@@ -11,7 +11,7 @@ largestArea = 0
 cx, cy = 0, 0
 
 #DEBUG Variables
-debug = True #Do we want to see an image output?
+debug = False #Do we want to see an image output?
 
 filterArea = 1000
 
@@ -26,12 +26,11 @@ cap = cv2.VideoCapture(0)
 
 while True:
     #Breaks the Camera Stream into Frames
-    running, frame            = cap.read()
+    running, frame = cap.read()
     
     if running:
-		table.putBoolean("Online?", True)
+        table.putBoolean("Online?", True)
         #First, we need to blur the image so contours are nicer
-        frame = cv2.GaussianBlur(frame, (5,5), 0)
         
         #So, next we need to convert the frame to HSV
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -80,7 +79,7 @@ while True:
             #enumerate(map(lambda x: vc2.contoursArea(x),countours)) is a list of tuples where the value is equal to
             #the area of the contours area given earlier.
             #The rest of the line sortes that array in descending order from the value of the tuple
-            areas = sorted(enumerate(map(lambda x: cv2.contoursArea(x), countours)), key=lambda x: x[1], reverse=True)
+            areas = sorted(enumerate(map(lambda x: cv2.contourArea(x), contours)), key=lambda x: x[1], reverse=True)
             
             #These find the indexes of the largest and second larges values of the contours and stores them.
             cnt1 = contours[areas[0][0]]
@@ -112,15 +111,15 @@ while True:
             
     else: print("ERROR")
 
-    if outputPhotos == False: continue
+    if cv2.waitKey(5) == ord("q") or table.getBoolean("Shutdown", False): break
+
+    if outputPhotos == False or debug == False: continue
 
     countDown += 1
     if countDown >= 30:
         countDown = 0 
         cv2.imwrite("photos/photo_%i.jpg" % photoCount, res)
         photoCount += 1
-
-    if cv2.waitKey(5) == ord("q") or table.getBoolean("Shutdown", False): break
 
 cap.release()
 subprocess.run(["showdown","now"], shell=True)
