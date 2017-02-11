@@ -1,6 +1,11 @@
 import cv2
 import subprocess
 import numpy as np
+from networktables import NetworkTables
+
+NetworkTables.initialize(server='roborio-4468-frc.local')
+table = NetworkTables.getTable("LINKSvision")
+
 
 largestArea = 0
 cx, cy = 0, 0
@@ -24,6 +29,7 @@ while True:
     running, frame            = cap.read()
     
     if running:
+		table.putBoolean("Online?", True)
         #First, we need to blur the image so contours are nicer
         frame = cv2.GaussianBlur(frame, (5,5), 0)
         
@@ -94,7 +100,10 @@ while True:
                 cy1 = int(M1['m01']/M1['m00'])
                 cy2 = int(M2['m01']/M2['m00'])
                 cy = (cy1 + cy2) / 2
-                
+               
+		table.putNumber("Center X", cx)
+		table.putNumber("Center Y", cy)
+		
         if debug:
             cv2.drawContours(res, contours, -1, (0, 255, 0), 3)
             cv2.circle(res,(cx, cy), 8, (0,0,255), -1)
@@ -111,8 +120,7 @@ while True:
         cv2.imwrite("photos/photo_%i.jpg" % photoCount, res)
         photoCount += 1
 
-    ch = cv2.waitKey()
-    if ch == 27:break
+    if cv2.waitKey(5) == ord("q") or table.getBoolean("Shutdown", False): break
 
 cap.release()
 subprocess.run(["showdown","now"], shell=True)
