@@ -4,13 +4,22 @@
 #include "zmq.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/core.hpp"
+//#include "opencv2/gpu/gpu.hpp" May work on Jetson have to test
 #include "opencv2/highgui.hpp"
 
+/* NOTE: to get it to run on my mac i had to run this:
+g++ vision.cpp $(pkg-config --cflags --libs opencv) -O3 -L/usr/local/lib -I/usr/local/include -lzmq -o test
+please expect some difficults to compile much less work properly.
+*/
+// Settings and global vars
 int cx1, cx2, cx, cy1, cy2, cy;
 bool isTimed = true;
+bool isSending = false;
+bool isPrinting = true;
 bool display = false;
 bool debug = false;
 
+// Raw data
 double fov = 62.8; // Camera field of view
 double bh = 2.5;   // Height of the boiler
 double ch = 0.5;   // Height of the camera
@@ -18,17 +27,24 @@ double Ao = 50;    // Angle offset or camera angle
 int Iw = 640;      // Image width
 int Ih = 360;      // Image height
 
+// Interpretted and calculated vals
 double deltaH = (bh - ch); // difference in heights
 double Iwc = ((((double) Iw)/2) - 0.5); // The center pixel for width
 double Ihc = ((((double) Ih)/2) - 0.5); // The center pixel for height
 double f = (((double ) Iw)/(2 * tan(fov/2))); // The focal length of the camera from the FOV
 
+// Networking vars
+zmq::context_t context (1);
+zmq::socket_t publisher(context, ZMQ_PUB);
+
+// Calculates the horizontal angle from the boiler
 double yawAngle(int x){
-  return atan((x - Iwc)/f);
+    return atan((x - Iwc)/f);
 }
 
+// Calculates the distance to the boiler
 double distance(int y){
-  return (deltaH/(((y - Ihc)/f) + Ao));
+    return (deltaH/(((y - Ihc)/f) + Ao));
 }
 
 int main(){
@@ -40,6 +56,9 @@ int main(){
     if(debug){
         isTimed = display = debug;
     }
+    // Networking 
+    publisher.bind("tcp://*:5801");
+
     for(;;){
         // starts time on the cycle
         if(isTimed){ start = clock(); }
@@ -111,14 +130,28 @@ int main(){
                 cy1 = (int) m1.m01 / m1.m00;
                 cy2 = (int) m2.m01 / m2.m00;
                 cy  = (int) (cy1 + cy2) / 2;
-                
-                std::cout << "center x: " << cx << "\tcenter y: " << cy << "\n";
-                std::cout << "Yaw Angle: " << yawAngle(cx) << "\tDistance: " << distance(cy) << "\n";
+
+                double a = yawAngle(cx);
+                double d = distance(cy);
+
+                if(isPrinting){
+                  std::cout << "center x: " << cx << "\tcenter y: " << cy << "\n";
+                  std::cout << "Yaw Angle: " << a << "\tDistance: " << d  << "\n";
+                }
+                if(isSending){
+                  zmq::message_t message(20);
+                  snprintf ((char *) message.data(), 20, "%f %f", a, d);
+                  publisher.send(message);
+                }
             } else {
-                std::cout << "m1.m00: " << m1.m00 << "\tm2.m00: " << m2.m00 << "\n";
+                if(isPrinting){
+                  std::cout << "m1.m00: " << m1.m00 << "\tm2.m00: " << m2.m00 << "\n";
+                }
             }
         } else {
-            std::cout << "ERROR\n";
+            if(isPrinting){
+              std::cout << "ERROR\n";
+            }
         } 
         // Display images
         if(display){
