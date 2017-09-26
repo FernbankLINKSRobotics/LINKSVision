@@ -1,5 +1,6 @@
 #include <iostream>
 #include <time.h>
+#include <cmath>
 #include "opencv2/imgproc.hpp"
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
@@ -9,15 +10,35 @@ bool isTimed = true;
 bool display = false;
 bool debug = false;
 
+double fov = 62.8; // Camera field of view
+double bh = 2.5;   // Height of the boiler
+double ch = 0.5;   // Height of the camera
+double Ao = 50;    // Angle offset or camera angle
+int Iw = 640;      // Image width
+int Ih = 360;      // Image height
+
+double deltaH = (bh - ch); // difference in heights
+double Iwc = ((((double) Iw)/2) - 0.5); // The center pixel for width
+double Ihc = ((((double) Ih)/2) - 0.5); // The center pixel for height
+double f = (((double ) Iw)/(2 * tan(fov/2))); // The focal length of the camera from the FOV
+
+double yawAngle(int x){
+  return atan((x - Iwc)/f);
+}
+
+double distance(int y){
+  return (deltaH/(((y - Ihc)/f) + Ao));
+}
+
 int main(){
-
+    // Gets the camera input
     cv::VideoCapture cap(0);
+    // Initializes a clock for FPS count
     clock_t start, end;
-
+    // Anables debug mode with FPS and image
     if(debug){
         isTimed = display = debug;
     }
-
     for(;;){
         // starts time on the cycle
         if(isTimed){ start = clock(); }
@@ -25,7 +46,7 @@ int main(){
         cv::Mat cam;
         cap.read(cam);
         // Down res the image
-        cv::resize(cam, cam, cv::Size(640, 360), 0, 0, cv::INTER_CUBIC);
+        cv::resize(cam, cam, cv::Size(Iw, Ih), 0, 0, cv::INTER_CUBIC);
         // Convert to HSV for color filtering
         cv::Mat HSV_img;
         cv::cvtColor(cam, HSV_img, cv::COLOR_BGR2HSV);
@@ -61,12 +82,14 @@ int main(){
             
             // Finds the largest and second largest contour areas
             for(int i=0; i < c_size; i++){
+                // Goes through and finds the lastest val by setting fst_area 
                 int area = (int) cv::contourArea(contours[i]);
                 if(area > fst_area){
+                    snd_area = fst_area;
+                    snd_contour = fst_contour;
                     fst_contour = contours[i];
                     fst_area = area;
-                }
-                if((area < fst_area) && (area > snd_area)){
+                } else if(area > snd_area){
                     snd_contour = contours[i];
                     snd_area = area;
                 }
@@ -89,6 +112,7 @@ int main(){
                 cy  = (int) (cy1 + cy2) / 2;
                 
                 std::cout << "center x: " << cx << "\tcenter y: " << cy << "\n";
+                std::cout << "Yaw Angle: " << yawAngle(cx) << "\tDistance: " << distance(cy) << "\n";
             } else {
                 std::cout << "m1.m00: " << m1.m00 << "\tm2.m00: " << m2.m00 << "\n";
             }
