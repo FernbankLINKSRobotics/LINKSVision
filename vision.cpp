@@ -44,7 +44,7 @@ double yawAngle(int x){
 
 // Calculates the distance to the boiler
 double distance(int y){
-    return (deltaH/(((y - Ihc)/f) + Ao));
+    return (deltaH/tan(atan((y - Ihc)/f) + Ao));
 }
 
 int main(){
