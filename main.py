@@ -32,15 +32,15 @@ Ih  = 360;  # Image height
 deltaH = (bh - ch);             # difference in heights
 Iwc    = ((Iw/2) - 0.5);        # The center pixel for width
 Ihc    = ((Ih/2) - 0.5);        # The center pixel for height
-f      = (Iw/(2 * tan(fov/2))); # The focal length of the camera from the FOV
+f      = (Iw/(2 * math.tan(fov/2))); # The focal length of the camera from the FOV
 
 # Calculates the horizontal angle from the boiler
 def yawAngle(x):
-    return atan((x - Iwc)/f)
+    return math.atan((x - Iwc)/f)
 
 # Calculates the distance to the boiler
 def distance(y):
-    return (deltaH/tan(atan((y - Ihc)/f) + Ao))
+    return (deltaH/math.tan(math.atan((y - Ihc)/f) + Ao))
 
 if debug:
     printing, showing = True, True
