@@ -134,7 +134,10 @@ while True:
             cv2.imshow("Initial", frame)
             cv2.imshow("Final", res)
 
-    else: print("ERROR")
+    else: 
+        print("ERROR")
+        table.putNumber("Angle", 0);
+        table.putNumber("Distance", 0)
 
     # Shutsdown
     if cv2.waitKey(5) == ord("q") or table.getBoolean("Shutdown", False): break
